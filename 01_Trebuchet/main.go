@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func fileReader(path string) (string, error) {
@@ -28,7 +29,6 @@ func isNumeric(w string) bool {
 	_, err := strconv.Atoi(w)
 	return err == nil
 }
-
 func getCalibrationValue(line string) int {
 	var calibrationValueString string
 	n := len(line)
@@ -52,6 +52,7 @@ func getCalibrationValue(line string) int {
 	return calibrationValue
 }
 func main() {
+	start := time.Now()
 	path := os.Args[1]
 	finalCalibrationValue := 0
 	content, err := fileReader(path)
@@ -67,4 +68,5 @@ func main() {
 		}
 	}
 	fmt.Println(finalCalibrationValue)
+	fmt.Println(time.Since(start))
 }
