@@ -99,10 +99,50 @@ func getGameSplit(input string) int {
 	return gameNumber
 }
 
-func main() {
-	start := time.Now()
-	path := os.Args[1]
-	input := readFile(path)
+func getMaxBlueCubes(input string) int {
+	BlueCubesString := blueCubesRegex.FindAllString(input, -1)
+	maxBlueCubes := 0
+	for _, BlueCubesStr := range BlueCubesString {
+		BlueCubesInt, err := strconv.Atoi(strings.Split(BlueCubesStr, " ")[0])
+		if err != nil {
+			panic(err)
+		}
+		if BlueCubesInt > maxBlueCubes {
+			maxBlueCubes = BlueCubesInt
+		}
+	}
+	return maxBlueCubes
+}
+func getMaxGreenCubes(input string) int {
+	GreenCubesString := greenCubesRegex.FindAllString(input, -1)
+	maxGreenCubes := 0
+	for _, GreenCubesStr := range GreenCubesString {
+		GreenCubesInt, err := strconv.Atoi(strings.Split(GreenCubesStr, " ")[0])
+		if err != nil {
+			panic(err)
+		}
+		if GreenCubesInt > maxGreenCubes {
+			maxGreenCubes = GreenCubesInt
+		}
+	}
+	return maxGreenCubes
+}
+
+func getMaxRedCubes(input string) int {
+	RedCubesString := redCubesRegex.FindAllString(input, -1)
+	maxRedCubes := 0
+	for _, RedCubesStr := range RedCubesString {
+		RedCubesInt, err := strconv.Atoi(strings.Split(RedCubesStr, " ")[0])
+		if err != nil {
+			panic(err)
+		}
+		if RedCubesInt > maxRedCubes {
+			maxRedCubes = RedCubesInt
+		}
+	}
+	return maxRedCubes
+}
+func part1(input string) {
 	lines := getLines(input)
 	sumGoodGames := 0
 	for index, line := range lines {
@@ -124,5 +164,19 @@ func main() {
 	}
 
 	fmt.Println(sumGoodGames)
+}
+func part2(input string) {
+	lines := getLines(input)
+	power := 0
+	for _, line := range lines {
+		power += getMaxBlueCubes(line) * getMaxGreenCubes(line) * getMaxRedCubes(line)
+	}
+	fmt.Println(power)
+}
+func main() {
+	start := time.Now()
+	path := os.Args[1]
+	input := readFile(path)
+	part2(input)
 	fmt.Println(time.Since(start))
 }
