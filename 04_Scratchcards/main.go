@@ -39,6 +39,44 @@ func in(a string, list []string) bool {
 	}
 	return false
 }
+func initCards(n int) []int {
+	cards := make([]int, n)
+	for i := 0; i < n; i++ {
+		cards[i] = 1
+	}
+	return cards
+}
+
+func sumList(list []int) int {
+	sum := 0
+	for _, val := range list {
+		sum += val
+	}
+	return sum
+}
+func part2(input *string) {
+	lines := getLines(input)
+	n := len(lines)
+	noOfCards := initCards(n)
+	fmt.Println(noOfCards)
+	for index, line := range lines {
+		winningNumbers := getWinningNumbers(&line)
+		yourNumbers := getYourNumbers(&line)
+		score := 0
+		for _, yourNumber := range yourNumbers {
+			if in(yourNumber, winningNumbers) {
+				score++
+			}
+		}
+		for i := index + 1; i < index+score+1; i++ {
+			if i < n {
+				noOfCards[i] += noOfCards[index]
+			}
+		}
+		fmt.Println(noOfCards)
+	}
+	fmt.Println(sumList(noOfCards))
+}
 func part1(input *string) {
 	lines := getLines(input)
 	sumScore := 0
@@ -63,6 +101,7 @@ func main() {
 	start := time.Now()
 	path := os.Args[1]
 	input := readFile(&path)
-	part1(&input)
+	// part1(&input)
+	part2(&input)
 	fmt.Println(time.Since(start))
 }
