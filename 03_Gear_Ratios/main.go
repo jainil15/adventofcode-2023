@@ -10,6 +10,7 @@ import (
 )
 
 var numberRegex = regexp.MustCompile("[0-9]+")
+var starRegex = regexp.MustCompile("[*]")
 
 func readFile(path string) string {
 	input, err := os.ReadFile(path)
@@ -18,7 +19,7 @@ func readFile(path string) string {
 	}
 	return string(input)
 }
-func part1v2(input string) int {
+func part1(input string) int {
 	inputSplit := strings.Split(input, "\n")[0 : len(strings.Split(input, "\n"))-1]
 	n := len(inputSplit[0]) + 1
 	indexes := numberRegex.FindAllStringSubmatchIndex(input, -1)
@@ -125,136 +126,84 @@ func part1v2(input string) int {
 	fmt.Println(sum)
 	return sum
 }
-func part1(input string) int {
+func checkBetween(index1 []int, index2 int) bool {
+	if index2 >= index1[0] && index2 <= index1[1] {
+		fmt.Printf("Index1: %v, Index2: %d\n", index1, index2)
+		return true
+	}
+	return false
+}
+
+func part2(input string) int {
 	inputSplit := strings.Split(input, "\n")[0 : len(strings.Split(input, "\n"))-1]
 	n := len(inputSplit[0]) + 1
-	idx := numberRegex.FindAllStringSubmatchIndex(input, -1)
+	fmt.Println(n)
+	indexes := numberRegex.FindAllStringSubmatchIndex(input, -1)
+	starIndexes := starRegex.FindAllStringSubmatchIndex(input, -1)
 	numbers := numberRegex.FindAllString(input, -1)
 	sum := 0
-	fmt.Println(idx)
-	fmt.Println(numbers)
+	for _, val := range starIndexes {
+		prod := 1
+		count := 0
+		fmt.Println(val)
+		topUpperBound := (val[0]/n-1)*n + (val[0] % n) - 1
+		topLowerBound := (val[0]/n-1)*n + (val[0] % n) + 1
 
-	for k, i := range idx {
-		// Check Up and down
-		checked := false
-		for j := i[0]; j < i[1]; j++ {
-			col := j % n
-			row := j / n
-			if row > 0 && inputSplit[row-1][col] != '.' && !checked {
-				fmt.Printf("Up: %s\n", numbers[k])
-				fmt.Printf("Row: %d, Col: %d\n", row, col)
-				s, err := strconv.Atoi(numbers[k])
-				if err != nil {
-					panic(err)
+		bottomUpperBound := (val[0]/n+1)*n + (val[0] % n) - 1
+		bottomLowerBound := (val[0]/n+1)*n + (val[0] % n) + 1
+		middleUpperBound := (val[0]/n)*n + (val[0] % n) - 1
+		middleLowerBound := (val[0]/n)*n + (val[0] % n) + 1
+		for index, val := range indexes {
+			for j := val[0]; j < val[1]; j++ {
+
+				if checkBetween([]int{topUpperBound, topLowerBound}, j) {
+					p, err := strconv.Atoi(numbers[index])
+					if err != nil {
+						panic(err)
+					}
+					prod *= p
+					count++
+					break
 				}
-				checked = true
-				sum += s
-				break
-			}
-			if row < len(inputSplit)-1 && inputSplit[row+1][col] != '.' && !checked {
-				fmt.Printf("Down: %s\n", numbers[k])
-				fmt.Printf("Row: %d, Col: %d\n", row, col)
-				s, err := strconv.Atoi(numbers[k])
-				if err != nil {
-					panic(err)
+				if checkBetween([]int{bottomUpperBound, bottomLowerBound}, j) {
+					p, err := strconv.Atoi(numbers[index])
+					if err != nil {
+						panic(err)
+					}
+					prod *= p
+					count++
+					break
+
 				}
-				sum += s
-				checked = true
-				break
+				if checkBetween([]int{middleUpperBound, middleLowerBound}, j) {
+					p, err := strconv.Atoi(numbers[index])
+					if err != nil {
+						panic(err)
+					}
+					prod *= p
+					count++
+					break
+				}
 			}
 		}
-
-		leftRow := i[0] / n
-		leftCol := i[0] % n
-		rightRow := (i[1] - 1) / n
-		rightCol := (i[1] - 1) % n
-		// Check Left and Right
-
-		if leftCol > 0 && inputSplit[leftRow][leftCol-1] != '.' && !checked {
-			fmt.Printf("Left: %s\n", numbers[k])
-			fmt.Printf("Row: %d, Col: %d\n", leftRow, leftCol)
-			s, err := strconv.Atoi(numbers[k])
-			if err != nil {
-				panic(err)
-			}
-			sum += s
-			checked = true
-			continue
+		if count == 2 {
+			sum += prod
 		}
-
-		if rightCol < n-1 && inputSplit[rightRow][rightCol+1] != '.' && !checked {
-			fmt.Printf("Right: %s\n", numbers[k])
-			s, err := strconv.Atoi(numbers[k])
-			if err != nil {
-				panic(err)
-			}
-			sum += s
-			checked = true
-			continue
+		if count > 2 {
+			panic("More than 2")
 		}
-
-		// Check Adjacent
-		// Top Right
-		if leftRow > 0 && leftCol < n-1 && inputSplit[leftRow-1][leftCol+1] != '.' && !checked {
-			fmt.Printf("Top Right: %s\n", numbers[k])
-			s, err := strconv.Atoi(numbers[k])
-			if err != nil {
-				panic(err)
-			}
-			sum += s
-			checked = true
-			continue
-		}
-		// Top Left
-		if leftRow > 0 && leftCol > 0 && inputSplit[leftRow-1][leftCol-1] != '.' && !checked {
-			fmt.Printf("Top Left: %s\n", numbers[k])
-			s, err := strconv.Atoi(numbers[k])
-			if err != nil {
-				panic(err)
-			}
-			sum += s
-			checked = true
-			continue
-
-		}
-		// Bottom Right
-		if rightRow < len(inputSplit)-1 && rightCol < n-1 && inputSplit[rightRow+1][rightCol+1] != '.' && !checked {
-			fmt.Printf("Bottom Right: %s\n", numbers[k])
-			s, err := strconv.Atoi(numbers[k])
-			if err != nil {
-				panic(err)
-			}
-
-			sum += s
-			checked = true
-			continue
-		}
-		// Bottom Left
-		if rightRow < len(inputSplit)-1 && rightCol > 0 && inputSplit[rightRow+1][rightCol-1] != '.' && !checked {
-			fmt.Printf("Bottom Left: %s\n", numbers[k])
-
-			s, err := strconv.Atoi(numbers[k])
-			if err != nil {
-				panic(err)
-			}
-			sum += s
-			checked = true
-			continue
-		}
-
-		// if i[0] > 0 && inputSplit != '.' && !checked {
-
-		fmt.Printf("No Adjacent: %s\n", numbers[k])
+		fmt.Println(topUpperBound, topLowerBound, bottomUpperBound, bottomLowerBound, middleUpperBound, middleLowerBound)
 	}
+	fmt.Println(indexes, numbers)
 	fmt.Println(sum)
-	return 0
+	return sum
 }
 
 func main() {
 	start := time.Now()
 	path := os.Args[1]
 	input := readFile(path)
-	part1v2(input)
-
+	// part1(input)
+	part2(input)
 	fmt.Println(time.Since(start))
 }
