@@ -140,6 +140,22 @@ func readFile(path *string) string {
 	}
 	return string(input)
 }
+func getSeeds(input *Input) {
+	removeIndex := []int{}
+	n := len(input.seeds)
+	removedIndex := 0
+	for i := 0; i < n; i += 2 {
+		removeIndex = append(removeIndex, i-removedIndex+1)
+		for j := 0; j < input.seeds[i+1]; j++ {
+			input.seeds = append(input.seeds, input.seeds[i]+j)
+		}
+		fmt.Println("removedIndex", removeIndex)
+		removedIndex++
+	}
+	for _, i := range removeIndex {
+		input.seeds = append(input.seeds[:i], input.seeds[i+1:]...)
+	}
+}
 func part1(input *string) {
 	convertedInput := convertToInput(input)
 	fmt.Printf("%v\n", *convertedInput)
@@ -154,10 +170,25 @@ func part1(input *string) {
 	}
 	fmt.Println(min)
 }
+func part2(input *string) {
+	convertedInput := convertToInput(input)
+	getSeeds(convertedInput)
+	fmt.Println(convertedInput.seeds)
+	min := 999999999999999999
+	for _, i := range convertedInput.seeds {
+		c := make(chan int)
+		go getLocation(i, convertedInput, c)
+		loc := <-c
+		if min > loc {
+			min = loc
+		}
+	}
+	fmt.Println(min)
 
+}
 func main() {
 	start := time.Now()
 	input := readFile(&os.Args[1])
-	part1(&input)
+	part2(&input)
 	fmt.Printf("Time taken: %s", time.Since(start))
 }
