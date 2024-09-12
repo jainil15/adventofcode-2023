@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -142,15 +143,13 @@ func readFile(path *string) string {
 }
 func getSeeds(input *Input) {
 	removeIndex := []int{}
+	removeIdx := 1
 	n := len(input.seeds)
-	removedIndex := 0
 	for i := 0; i < n; i += 2 {
-		removeIndex = append(removeIndex, i-removedIndex+1)
-		for j := 0; j < input.seeds[i+1]; j++ {
-			input.seeds = append(input.seeds, input.seeds[i]+j)
-		}
+		removeIndex = append(removeIndex, removeIdx)
+		input.seeds = append(input.seeds, input.seeds[i]+input.seeds[i+1])
+		removeIdx++
 		fmt.Println("removedIndex", removeIndex)
-		removedIndex++
 	}
 	for _, i := range removeIndex {
 		input.seeds = append(input.seeds[:i], input.seeds[i+1:]...)
@@ -170,21 +169,168 @@ func part1(input *string) {
 	}
 	fmt.Println(min)
 }
-func part2(input *string) {
-	convertedInput := convertToInput(input)
-	getSeeds(convertedInput)
-	fmt.Println(convertedInput.seeds)
-	min := 999999999999999999
-	for _, i := range convertedInput.seeds {
-		c := make(chan int)
-		go getLocation(i, convertedInput, c)
-		loc := <-c
-		if min > loc {
-			min = loc
+func addSeeds(input *Input, seedLower int, seedUpper int, Map [][]int) {
+	for _, val := range Map {
+		if checkBetween(seedLower, val[1], val[2]+val[1]) && !checkBetween(seedUpper, val[1], val[2]+val[1]) {
+			input.seeds = append(input.seeds, val[1]+1)
+		}
+		if !checkBetween(seedLower, val[1], val[2]+val[1]) && checkBetween(seedUpper, val[1], val[2]+val[1]) {
+			input.seeds = append(input.seeds, val[1]-1)
+		}
+		if checkBetween(seedLower, val[1], val[2]+val[1]) && checkBetween(seedUpper, val[1], val[2]+val[1]) {
+			fmt.Println(seedLower, seedUpper, val[1], val[1]+val[2])
 		}
 	}
-	fmt.Println(min)
+}
+func generateSeeds(input *Input, Map [][]int, n int) {
+	for i := 0; i < n; i += 2 {
+		addSeeds(
+			input,
+			input.seeds[i],
+			input.seeds[i+1]+input.seeds[i],
+			Map,
+		)
+	}
+}
+func getRemoveIndex(input *Input) []int {
+	removeIndex := []int{}
+	removeIdx := 1
+	n := len(input.seeds)
+	for i := 0; i < n; i += 2 {
+		removeIndex = append(removeIndex, removeIdx)
+		removeIdx++
+	}
+	return removeIndex
+}
+func removeIndexes(input *Input, removeIndex []int) {
+	for _, i := range removeIndex {
+		input.seeds = append(input.seeds[:i], input.seeds[i+1:]...)
+	}
+}
+func seedRanges(input *Input) []int {
+	n := len(input.seeds)
+	var output = make([]int, n)
+	for i := 0; i < n; i += 2 {
+		output[i] = input.seeds[i]
+		output[i+1] = input.seeds[i] + input.seeds[i+1]
+	}
+	slices.Sort(output)
+	return output
+}
+func toList(input [][]int) ([]int, []int) {
+	source := []int{}
+	destination := []int{}
+	for _, val := range input {
+		source = append(source, val[1], val[1]+val[2])
+		destination = append(destination, val[0], val[0]+val[2])
+	}
+	// slices.Sort(source)
+	// slices.Sort(destination)
+	return source, destination
+}
+func Max(a int, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+func mapRange(input []int, source []int, destination []int) []int {
+	n := len(input)
+	m := len(source)
+	// for _, i := range source {
+	// 	for j := 0; j < n; j += 2 {
+	// 		if checkBetween(i, input[j], input[j+1]) {
+	// 			input = append(input, i-1)
+	// 			input = append(input, i)
+	// 			break
+	// 		}
+	// 	}
+	// 	// slices.Sort(input)
+	// }
+	for i := 0; i < m; i += 2 {
+		for j := 0; j < n; j += 2 {
+			if checkBetween(source[i], input[j], input[j+1]) {
+				input = append(input, Max(0, source[i]-1))
+				input = append(input, Max(0, source[i]))
+			}
+			if checkBetween(source[i+1], input[j], input[j+1]) {
+				input = append(input, source[i+1]+1)
+				input = append(input, Max(0, source[i+1]))
+			}
+		}
+	}
+	fmt.Printf("Input Before Sort: %v\n", input)
+	slices.Sort(input)
+	fmt.Printf("Input: %v\n", input)
+	n = len(input)
+	outputRange := make([]int, n)
+	for i := 0; i < n; i++ {
+		checked := false
+		for j := 0; j < m; j += 2 {
+			fmt.Printf("Source: %v, Destination: %v\n", source, destination)
+			if checkBetween(input[i], source[j], source[j+1]) {
+				outputRange[i] = destination[j] + input[i] - source[j]
+				fmt.Printf("Range Mapping: %v, to %v \n", input[i], outputRange)
+				checked = true
+				break
+			}
+		}
+		if checked {
+			continue
+		} else {
+			outputRange[i] = input[i]
+			fmt.Printf("Self Mapping: %v, to %v \n", input[i], outputRange)
+		}
+	}
+	slices.Sort(outputRange)
+	fmt.Println(seedCount(outputRange))
+	fmt.Println()
+	return outputRange
 
+}
+func seedCount(seedRange []int) int {
+	n := len(seedRange)
+	count := 0
+	for i := 0; i < n; i += 2 {
+		count += seedRange[i+1] - seedRange[i]
+	}
+	return count
+}
+func part2(content *string) {
+	input := convertToInput(content)
+	seedRanges := seedRanges(input)
+	slices.Sort(seedRanges)
+	output := []int{}
+
+	seedToSoilMapSource, seedToSoilMapDestination := toList(input.seedToSoilMap)
+	output = mapRange(seedRanges, seedToSoilMapSource, seedToSoilMapDestination)
+	fmt.Println(output)
+
+	soilToFertilizerMapSource, soilToFertilizerMapDestination := toList(input.soilToFertilizerMap)
+	output = mapRange(output, soilToFertilizerMapSource, soilToFertilizerMapDestination)
+	fmt.Println(output)
+
+	fertilizerToWaterMapSource, fertilizerToWaterMapDestination := toList(input.fertilizerToWaterMap)
+	output = mapRange(output, fertilizerToWaterMapSource, fertilizerToWaterMapDestination)
+	fmt.Println(output)
+
+	waterToLightMapSource, waterToLightMapDestination := toList(input.waterToLightMap)
+	output = mapRange(output, waterToLightMapSource, waterToLightMapDestination)
+	fmt.Println(output)
+
+	lightToTemperatureMapSource, lightToTemperatureMapDestination := toList(input.lightToTemperatureMap)
+	output = mapRange(output, lightToTemperatureMapSource, lightToTemperatureMapDestination)
+	fmt.Printf("Output: %v\n", output)
+
+	temperatureToHumidityMapSource, temperatureToHumidityMapDestination := toList(input.temperatureToHumidityMap)
+	output = mapRange(output, temperatureToHumidityMapSource, temperatureToHumidityMapDestination)
+	fmt.Println(output)
+
+	humidityToLocationMapSource, humidityToLocationMapDestination := toList(input.humidityToLocationMap)
+	output = mapRange(output, humidityToLocationMapSource, humidityToLocationMapDestination)
+	fmt.Println(output)
+
+	fmt.Println(output[0])
 }
 func main() {
 	start := time.Now()
