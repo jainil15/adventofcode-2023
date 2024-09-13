@@ -54,7 +54,6 @@ func convertListToInt(input []string) []int {
 }
 func checkBetween(input int, lower int, upper int) bool {
 	if input >= lower && input < upper {
-		// fmt.Printf("Checked Between: %d, %d, %d\n", input, lower, upper)
 		return true
 	}
 	return false
