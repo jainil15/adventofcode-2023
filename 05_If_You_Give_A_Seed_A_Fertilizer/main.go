@@ -292,7 +292,7 @@ func seedCount(seedRange []int) int {
 	n := len(seedRange)
 	count := 0
 	for i := 0; i < n; i += 2 {
-		count += seedRange[i+1] - seedRange[i]
+		count += seedRange[i+1] - 1 - seedRange[i]
 	}
 	return count
 }
