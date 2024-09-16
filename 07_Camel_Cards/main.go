@@ -14,7 +14,8 @@ var cardValue = map[rune]int{
 	'A': 13,
 	'K': 12,
 	'Q': 11,
-	'J': 10,
+	// 'J': 10,
+	'J': 0,
 	'T': 9,
 	'9': 8,
 	'8': 7,
@@ -54,6 +55,9 @@ func readFile(path string) string {
 }
 func isFive(cardMap map[string]int) bool {
 	for k := range cardMap {
+		if k == "J" {
+			continue
+		}
 		if cardMap[k] == 5 {
 			return true
 		}
@@ -63,6 +67,9 @@ func isFive(cardMap map[string]int) bool {
 }
 func isFour(cardMap map[string]int) bool {
 	for k := range cardMap {
+		if k == "J" {
+			continue
+		}
 		if cardMap[k] == 4 {
 			return true
 		}
@@ -74,6 +81,9 @@ func isFullHouse(cardMap map[string]int) bool {
 	if len(keys) != 2 {
 		return false
 	}
+	if keys[0].String() == "J" || keys[1].String() == "J" {
+		return false
+	}
 	if (cardMap[keys[0].String()] == 3 && cardMap[keys[1].String()] == 2) || (cardMap[keys[0].String()] == 2 && cardMap[keys[1].String()] == 3) {
 		return true
 	}
@@ -81,6 +91,9 @@ func isFullHouse(cardMap map[string]int) bool {
 }
 func isThree(cardMap map[string]int) bool {
 	for k := range cardMap {
+		if k == "J" {
+			continue
+		}
 		if cardMap[k] == 3 {
 			return true
 		}
@@ -90,6 +103,9 @@ func isThree(cardMap map[string]int) bool {
 func isDoublePair(cardMap map[string]int) bool {
 	doubleCount := 0
 	for k := range cardMap {
+		if k == "J" {
+			continue
+		}
 		if cardMap[k] == 2 {
 			doubleCount++
 		}
@@ -101,7 +117,11 @@ func isDoublePair(cardMap map[string]int) bool {
 }
 func isSinglePair(cardMap map[string]int) bool {
 	for k := range cardMap {
+		if k == "J" {
+			continue
+		}
 		if cardMap[k] == 2 {
+			fmt.Println("Single Pair", k)
 			return true
 		}
 	}
@@ -126,17 +146,47 @@ func calcStr(hand string, bet int) strength {
 	if isFive(cardMap) {
 		handType = 6
 	} else if isFour(cardMap) {
-		handType = 5
+		handType = 5 + cardMap["J"]
 	} else if isFullHouse(cardMap) {
-		handType = 4
+		handType = 4 + cardMap["J"]
 	} else if isThree(cardMap) {
-		handType = 3
+		handType = 3 + cardMap["J"]
+		if cardMap["J"] > 0 {
+			handType += 1
+		}
 	} else if isDoublePair(cardMap) {
-		handType = 2
+		handType = 2 + cardMap["J"]
+		if cardMap["J"] > 0 {
+			handType += 1
+		}
 	} else if isSinglePair(cardMap) {
-		handType = 1
+		// handType = 1 + cardMap["J"]
+		switch cardMap["J"] {
+		case 0:
+			handType = 1
+		case 1:
+			handType = 3
+		case 2:
+			handType = 5
+		case 3:
+			handType = 6
+		}
 	} else {
-		handType = 0
+		switch cardMap["J"] {
+		case 0:
+			handType = 0
+		case 1:
+			handType = 1
+		case 2:
+			handType = 3
+		case 3:
+			handType = 5
+		case 4:
+			handType = 6
+		case 5:
+			handType = 6
+		}
+
 	}
 
 	fmt.Println(pos)
@@ -211,19 +261,6 @@ func main() {
 	for i, hand := range hands {
 		strength := calcStr(hand, bet[i])
 		handsSort = append(handsSort, strength)
-	}
-	o, err := os.ReadFile("output.txt")
-	if err != nil {
-		panic(err)
-	}
-	os.WriteFile("output.txt",
-		[]byte(fmt.Sprintf("%v", handsSort)),
-		0644)
-	if matchHandSort(string(o), fmt.Sprintf("%v", handsSort)) {
-		fmt.Println("Output matches")
-	}
-	if string(o) != fmt.Sprintf("%v", handsSort) {
-		panic("Output does not match")
 	}
 	sort.SliceStable(handsSort, func(i int, j int) bool {
 		if handsSort[i].handType == handsSort[j].handType {
