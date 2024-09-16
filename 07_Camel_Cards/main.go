@@ -36,10 +36,13 @@ const (
 )
 
 type strength struct {
-	str int
-	max int
-	pos float64
-	bet int
+	handType int
+	str      int
+	max      int
+	pos      float64
+	bet      int
+	hand     string
+	maxCard  string
 }
 
 func readFile(path string) string {
@@ -71,7 +74,7 @@ func isFullHouse(cardMap map[string]int) bool {
 	if len(keys) != 2 {
 		return false
 	}
-	if (cardMap[keys[0].String()] == 3 && cardMap[keys[1].String()] == 2) || (cardMap[keys[1].String()] == 2 && cardMap[keys[0].String()] == 3) {
+	if (cardMap[keys[0].String()] == 3 && cardMap[keys[1].String()] == 2) || (cardMap[keys[0].String()] == 2 && cardMap[keys[1].String()] == 3) {
 		return true
 	}
 	return false
@@ -107,44 +110,57 @@ func isSinglePair(cardMap map[string]int) bool {
 func calcStr(hand string, bet int) strength {
 	cardMap := make(map[string]int)
 	max := 0
+	maxCard := ""
 	total := 0
-	pos := "0."
+	pos := ""
 	for _, c := range hand {
 		cardMap[string(c)]++
 		total += cardValue[c]
-		pos += strconv.Itoa(cardValue[c])
+		pos += strconv.FormatInt(int64(cardValue[c]), 16)
 		if max < cardMap[string(c)] {
 			max = cardMap[string(c)]
+			maxCard = string(c)
 		}
 	}
+	handType := 0
 	if isFive(cardMap) {
-		total = total * five
+		handType = 6
 	} else if isFour(cardMap) {
-		total = total * four
+		handType = 5
 	} else if isFullHouse(cardMap) {
-		total = total * fullHouse
+		handType = 4
 	} else if isThree(cardMap) {
-		total = total * triple
+		handType = 3
 	} else if isDoublePair(cardMap) {
-		total = total * doublePair
+		handType = 2
 	} else if isSinglePair(cardMap) {
-		total = total * singlePair
+		handType = 1
 	} else {
-		total = total * max
+		handType = 0
 	}
 
 	fmt.Println(pos)
-	p, err := strconv.ParseFloat(pos, 64)
+	p, err := strconv.ParseUint(pos, 16, 64)
 	if err != nil {
 		panic(err)
 	}
-	handStrength := strength{
-		max: max,
-		pos: p,
-		str: total,
-		bet: bet,
+	sp := strconv.FormatInt(int64(p), 10)
+	sp = "0." + sp
+	pf, err := strconv.ParseFloat(sp, 64)
+	if err != nil {
+		panic(err)
 	}
-	fmt.Printf("Hand: %v, Str: %v Pos: %v HandStr: %v\n", hand, total, p, handStrength)
+	fmt.Println(pf)
+	handStrength := strength{
+		max:      max,
+		handType: handType,
+		str:      total,
+		bet:      bet,
+		pos:      pf,
+		hand:     hand,
+		maxCard:  maxCard,
+	}
+	fmt.Printf("Hand: %v, Str: %v Pos: %v HandStr: %v\n", hand, total, handStrength)
 	return handStrength
 }
 
@@ -164,7 +180,27 @@ func parseInput(input *string) ([]string, []int) {
 	}
 	return hand, bet
 }
-
+func isGreater(hand1 string, hand2 string) bool {
+	n := len(hand1)
+	for i := 0; i < n; i++ {
+		if cardValue[rune(hand1[i])] > cardValue[rune(hand2[i])] {
+			return false
+		} else if cardValue[rune(hand1[i])] < cardValue[rune(hand2[i])] {
+			return true
+		}
+	}
+	return true
+}
+func matchHandSort(handSort1, handSort2 string) bool {
+	n := len(handSort1)
+	for i := 0; i < n; i++ {
+		if handSort1[i] != handSort2[i] {
+			fmt.Printf("\nHandsSort1: %v\nHandsSort2: %v\n\n\n", handSort1[i-40:i+80], handSort2[i-40:i+80])
+			return false
+		}
+	}
+	return true
+}
 func main() {
 	start := time.Now()
 	path := os.Args[1]
@@ -176,14 +212,32 @@ func main() {
 		strength := calcStr(hand, bet[i])
 		handsSort = append(handsSort, strength)
 	}
-	sort.Slice(handsSort, func(i int, j int) bool {
-		return handsSort[i].str > handsSort[j].str
-	})
-	total := 0
-	for i, hand := range handsSort {
-		total = total + (hand.bet * (i + 1))
+	o, err := os.ReadFile("output.txt")
+	if err != nil {
+		panic(err)
 	}
-	fmt.Printf("Hands Sorted: %v\n", handsSort)
+	os.WriteFile("output.txt",
+		[]byte(fmt.Sprintf("%v", handsSort)),
+		0644)
+	if matchHandSort(string(o), fmt.Sprintf("%v", handsSort)) {
+		fmt.Println("Output matches")
+	}
+	if string(o) != fmt.Sprintf("%v", handsSort) {
+		panic("Output does not match")
+	}
+	sort.SliceStable(handsSort, func(i int, j int) bool {
+		if handsSort[i].handType == handsSort[j].handType {
+			// return handsSort[i].pos < handsSort[j].pos
+			return isGreater(handsSort[i].hand, handsSort[j].hand)
+		}
+		return handsSort[i].handType < handsSort[j].handType
+	})
+	var total int64 = 0
+	for i, hand := range handsSort {
+		fmt.Println(hand.bet * (i + 1))
+		total = total + int64(hand.bet*(i+1))
+	}
+	fmt.Printf("Hands Sorted: %+v\n", handsSort)
 	fmt.Println(total)
 	fmt.Printf("Time Req: %v\n", time.Since(start))
 }
