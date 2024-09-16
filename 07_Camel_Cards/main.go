@@ -121,7 +121,6 @@ func isSinglePair(cardMap map[string]int) bool {
 			continue
 		}
 		if cardMap[k] == 2 {
-			fmt.Println("Single Pair", k)
 			return true
 		}
 	}
@@ -190,7 +189,6 @@ func calcStr(hand string, bet int) strength {
 
 	}
 
-	fmt.Println(pos)
 	p, err := strconv.ParseUint(pos, 16, 64)
 	if err != nil {
 		panic(err)
@@ -201,7 +199,6 @@ func calcStr(hand string, bet int) strength {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(pf)
 	handStrength := strength{
 		max:      max,
 		handType: handType,
@@ -211,7 +208,6 @@ func calcStr(hand string, bet int) strength {
 		hand:     hand,
 		maxCard:  maxCard,
 	}
-	fmt.Printf("Hand: %v, Str: %v Pos: %v HandStr: %v\n", hand, total, handStrength)
 	return handStrength
 }
 
@@ -246,7 +242,6 @@ func matchHandSort(handSort1, handSort2 string) bool {
 	n := len(handSort1)
 	for i := 0; i < n; i++ {
 		if handSort1[i] != handSort2[i] {
-			fmt.Printf("\nHandsSort1: %v\nHandsSort2: %v\n\n\n", handSort1[i-40:i+80], handSort2[i-40:i+80])
 			return false
 		}
 	}
@@ -257,7 +252,6 @@ func main() {
 	path := os.Args[1]
 	input := readFile(path)
 	hands, bet := parseInput(&input)
-	fmt.Println(hands, bet)
 	handsSort := []strength{}
 	for i, hand := range hands {
 		strength := calcStr(hand, bet[i])
@@ -272,10 +266,8 @@ func main() {
 	})
 	var total int64 = 0
 	for i, hand := range handsSort {
-		fmt.Println(hand.bet * (i + 1))
 		total = total + int64(hand.bet*(i+1))
 	}
-	fmt.Printf("Hands Sorted: %+v\n", handsSort)
 	fmt.Println(total)
 	fmt.Printf("Time Req: %v\n", time.Since(start))
 }
