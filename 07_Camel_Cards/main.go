@@ -171,6 +171,7 @@ func calcStr(hand string, bet int) strength {
 		case 3:
 			handType = 6
 		}
+		cardMap["J"] = 0
 	} else {
 		switch cardMap["J"] {
 		case 0:
