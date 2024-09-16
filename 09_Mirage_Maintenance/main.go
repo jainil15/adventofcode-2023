@@ -72,12 +72,48 @@ func getHistory(line []int) []int {
 	return endVals
 }
 
+func getHistoryPart2(line []int) []int {
+	output := [][]int{line}
+	i := 0
+	endVals := []int{line[0]}
+	for {
+		o, isZero := getLine(output[i])
+		output = append(output, o)
+		i++
+		endVals = append(endVals, o[0])
+		if isZero {
+			break
+		}
+	}
+	fmt.Printf("Endvals: %v\n", endVals)
+	return endVals
+}
 func sumArr(list []int) int {
 	sum := 0
 	for _, val := range list {
 		sum += val
 	}
 	return sum
+}
+func subArr(list []int) int {
+	sub := 0
+	n := len(list)
+	for i := n - 2; i >= 0; i-- {
+		sub = list[i] - sub
+	}
+	fmt.Printf("Sub: %v\n", sub)
+	return sub
+}
+
+func part2(input *string) {
+	lines := parseInput(input)
+	sum := 0
+	for _, line := range lines {
+		output := getHistoryPart2(line)
+		sum += subArr(output)
+		fmt.Println(output)
+	}
+	fmt.Printf("Sum: %v\n", sum)
 }
 
 func part1(input *string) {
@@ -94,6 +130,6 @@ func main() {
 	start := time.Now()
 	path := os.Args[1]
 	input := readFile(path)
-	part1(&input)
+	part2(&input)
 	fmt.Printf("Took: %v\n", time.Since(start))
 }
