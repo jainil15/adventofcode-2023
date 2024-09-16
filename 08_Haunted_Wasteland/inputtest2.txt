@@ -1,0 +1,10 @@
+LR
+
+GHA = (GHB, XXX)
+GHB = (XXX, GHZ)
+GHZ = (GHB, XXX)
+FJA = (FJB, XXX)
+FJB = (FJC, FJC)
+FJC = (FJZ, FJZ)
+FJZ = (FJB, FJB)
+XXX = (XXX, XXX)
