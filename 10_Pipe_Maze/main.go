@@ -162,11 +162,15 @@ func testPath(network [][]rune, direction direction, i, j, count int) int {
 	return count
 }
 
-func testPath2(network [][]rune, sides, topDown map[int][]int, direction direction, i, j, count int) int {
+type wrapper struct {
+	sides [][]int
+}
+
+func testPath2(network [][]rune, w *wrapper, sidesMap map[int][]int, direction direction, i, j, count int) int {
 	if network[i][j] == 'S' {
 		count++
-		sides[i] = append(sides[i], j)
-		topDown[i] = append(topDown[i], j)
+		w.sides = append(w.sides, []int{i, j})
+		sidesMap[i] = append(sidesMap[i], j)
 		return count
 	}
 	if network[i][j] == '.' {
@@ -180,52 +184,130 @@ func testPath2(network [][]rune, sides, topDown map[int][]int, direction directi
 	// fmt.Printf("PERFECT PIPE: pipe: %v direction: %v count: %v, i %v, j %v \n", string(network[i][j]), direction, count, i, j)
 	d := pipeDirections(network[i][j], direction)
 	newI, newJ := getIndex(d, i, j)
-	c := testPath2(network, sides, topDown, d, newI, newJ, count+1)
+	w.sides = append(w.sides, []int{i, j})
+	c := testPath2(network, w, sidesMap, d, newI, newJ, count+1)
 	if c == -1 {
 		// fmt.Printf("Err: -1 pipe: %v direction: %v count: %v, i %v, j %v \n", string(network[i][j]), direction, count, i, j)
 		return -1
 	}
-
-	// sides[newI] = append(sides[newI], newJ)
-	sides[i] = append(sides[i], j)
-	topDown[j] = append(topDown[j], i)
+	sidesMap[i] = append(sidesMap[i], j)
 	count = c
 	return count
 }
-func subArr(arr []int) int {
-	slices.Sort(arr)
-	sub := 0
-	n := len(arr)
-	fmt.Println(arr, n)
-	for i := 0; i < n-1; i += 2 {
-		if (arr[i+1] - arr[i] - 1) < 0 {
+func checkNorthSouth(pipe rune) bool {
+	// fmt.Printf("rune: %v\n", string(pipe))
+	switch pipe {
+	case '-':
+		return false
+	default:
+		return true
+	}
+}
+func checkPipeNS(pipe1 rune, pipe2 rune) bool {
+	if pipe1 == 'S' {
+		return false
+	}
+	if pipe2 == 'S' {
+		return true
+	}
+	if pipe1 == '-' {
+		if pipe2 == 'J' {
+			return false
+		}
+		if pipe2 == '7' {
+			return false
+		}
+		if pipe2 == '-' {
+			return false
+		}
+		return true
+	}
+	if pipe2 == '-' {
+		if pipe1 == 'L' {
+			return false
+		}
+		if pipe1 == 'F' {
+			return false
+		}
+		if pipe1 == '-' {
+			return false
+		}
+		return true
+	}
+	if pipe1 == 'F' && pipe2 == '7' {
+		return true
+	}
+	if pipe1 == 'F' && pipe2 == 'J' {
+		return false
+	}
+	if pipe1 == 'L' && pipe2 == '7' {
+		return false
+	}
+	if pipe1 == 'L' && pipe2 == 'J' {
+		return true
+	}
+	return true
+}
+func checkIfInsideLoop(pipeMap [][]rune, i, k int, sides []int) bool {
+	fmt.Printf("sides: %v\n\n", sides)
+	count := 0
+	n := len(sides[i:])
+	fmt.Println(sides[i], sides[i+1:], n)
+	for j := i; j < i+n-1; j++ {
+		if sides[j+1]-sides[j] > 0 &&
+			// checkNorthSouth(pipeMap[k][sides[j]]) &&
+			// checkNorthSouth(pipeMap[k][sides[j+1]]) &&
+			checkPipeNS(pipeMap[k][sides[j]], pipeMap[k][sides[j+1]]) {
+			fmt.Printf("j is %d, j+1: %v, j: %v, pipe: %v, pipe: %v\n", j, sides[j+1], sides[j], string(pipeMap[k][sides[j]]), string(pipeMap[k][sides[j+1]]))
+			count++
+		}
+		// } else {
+		//
+		// 	fmt.Printf("diff: %v first: %v second: %v\n", sides[j+1]-sides[j] > 0, checkNorthSouth(pipeMap[k][j]), checkNorthSouth(pipeMap[k][j+1]))
+		// }
+	}
+	if count%2 == 0 {
+		fmt.Println("IT IS FALSE!!!!!!!")
+		return false
+	}
+	fmt.Println("IT IS TRUE!!!!!!!")
+	return true
+}
+func getInsideLoopCount(pipeMap [][]rune, sideMap map[int][]int) int {
+	count := 0
+	for k := range sideMap {
+		n := len(sideMap[k])
+		slices.Sort(sideMap[k])
+		if len(sideMap[k-1]) == 0 {
+			fmt.Printf("INGORED FIRST k: %v\n", k)
 			continue
 		}
-
-		if (arr[i+1] - arr[i] - 1) > 0 {
-			fmt.Printf("arr: %v, i : %v, j : %v , sub: %v\n", arr, arr[i+1], arr[i], arr[i+1]-arr[i]-1)
+		if len(sideMap[k+1]) == 0 {
+			fmt.Printf("IGNORED LAST k: %v\n", k)
+			continue
 		}
-		sub += (arr[i+1] - arr[i] - 1)
+		fmt.Printf("\nk: %v\t\n", k)
+		for i := 0; i < n-1; i++ {
+			sub := sideMap[k][i+1] - sideMap[k][i] - 1
+			if sub > 0 && checkIfInsideLoop(pipeMap, i, k, sideMap[k]) {
+				count += sub
+			}
+		}
 	}
-	return sub
+
+	return count
 }
-func getCountInsideLoop(sides map[int][]int) (sum int) {
-	for k := range sides {
-		fmt.Println(k)
-		sum += subArr(sides[k])
-	}
-	return sum
-}
+
 func part2(input *string) {
 	network, i, j := parseInput(input)
 	fmt.Printf("Network: %v, sI: %v, sj: %v\n", network, i, j)
 	newI, newJ := 0, 0
 	newI, newJ = getIndex(south, i, j)
-	sides := map[int][]int{}
-	topDown := map[int][]int{}
-	count := testPath2(network, sides, topDown, south, newI, newJ, 0)
-	insideLoopCount := getCountInsideLoop(sides)
-	fmt.Println(insideLoopCount)
+	sidesMap := make(map[int][]int)
+	w := wrapper{}
+	count := testPath2(network, &w, sidesMap, south, newI, newJ, 0)
+	// fmt.Println(w)
+	fmt.Println(getInsideLoopCount(network, sidesMap))
 	fmt.Printf("Count : %d\n", count/2)
 }
 func part1(input *string) {
