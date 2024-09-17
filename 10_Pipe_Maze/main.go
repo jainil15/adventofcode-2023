@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 )
@@ -135,6 +136,7 @@ func getIndex(direction direction, i, j int) (int, int) {
 	}
 	panic(direction)
 }
+
 func testPath(network [][]rune, direction direction, i, j, count int) int {
 	if network[i][j] == 'S' {
 		count++
@@ -160,6 +162,72 @@ func testPath(network [][]rune, direction direction, i, j, count int) int {
 	return count
 }
 
+func testPath2(network [][]rune, sides, topDown map[int][]int, direction direction, i, j, count int) int {
+	if network[i][j] == 'S' {
+		count++
+		sides[i] = append(sides[i], j)
+		topDown[i] = append(topDown[i], j)
+		return count
+	}
+	if network[i][j] == '.' {
+		return -1
+	}
+
+	if !validateNextPipe(network[i][j], direction) {
+		// fmt.Printf("Err: pipe: %v direction: %v count: %v, i %v, j %v \n", string(network[i][j]), direction, count, i, j)
+		return -1
+	}
+	// fmt.Printf("PERFECT PIPE: pipe: %v direction: %v count: %v, i %v, j %v \n", string(network[i][j]), direction, count, i, j)
+	d := pipeDirections(network[i][j], direction)
+	newI, newJ := getIndex(d, i, j)
+	c := testPath2(network, sides, topDown, d, newI, newJ, count+1)
+	if c == -1 {
+		// fmt.Printf("Err: -1 pipe: %v direction: %v count: %v, i %v, j %v \n", string(network[i][j]), direction, count, i, j)
+		return -1
+	}
+
+	// sides[newI] = append(sides[newI], newJ)
+	sides[i] = append(sides[i], j)
+	topDown[j] = append(topDown[j], i)
+	count = c
+	return count
+}
+func subArr(arr []int) int {
+	slices.Sort(arr)
+	sub := 0
+	n := len(arr)
+	fmt.Println(arr, n)
+	for i := 0; i < n-1; i += 2 {
+		if (arr[i+1] - arr[i] - 1) < 0 {
+			continue
+		}
+
+		if (arr[i+1] - arr[i] - 1) > 0 {
+			fmt.Printf("arr: %v, i : %v, j : %v , sub: %v\n", arr, arr[i+1], arr[i], arr[i+1]-arr[i]-1)
+		}
+		sub += (arr[i+1] - arr[i] - 1)
+	}
+	return sub
+}
+func getCountInsideLoop(sides map[int][]int) (sum int) {
+	for k := range sides {
+		fmt.Println(k)
+		sum += subArr(sides[k])
+	}
+	return sum
+}
+func part2(input *string) {
+	network, i, j := parseInput(input)
+	fmt.Printf("Network: %v, sI: %v, sj: %v\n", network, i, j)
+	newI, newJ := 0, 0
+	newI, newJ = getIndex(south, i, j)
+	sides := map[int][]int{}
+	topDown := map[int][]int{}
+	count := testPath2(network, sides, topDown, south, newI, newJ, 0)
+	insideLoopCount := getCountInsideLoop(sides)
+	fmt.Println(insideLoopCount)
+	fmt.Printf("Count : %d\n", count/2)
+}
 func part1(input *string) {
 	network, i, j := parseInput(input)
 	fmt.Printf("Network: %v, sI: %v, sj: %v\n", network, i, j)
@@ -184,7 +252,7 @@ func main() {
 	start := time.Now()
 	path := os.Args[1]
 	content := readFile(path)
-	part1(&content)
+	part2(&content)
 
 	fmt.Printf("Took: %v\n", time.Since(start))
 }
