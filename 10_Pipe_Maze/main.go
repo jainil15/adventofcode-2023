@@ -145,14 +145,15 @@ func testPath(network [][]rune, direction direction, i, j, count int) int {
 	}
 
 	if !validateNextPipe(network[i][j], direction) {
-		fmt.Printf("Err: pipe: %v direction: %v count: %v, i %v, j %v \n", string(network[i][j]), direction, count, i, j)
+		// fmt.Printf("Err: pipe: %v direction: %v count: %v, i %v, j %v \n", string(network[i][j]), direction, count, i, j)
 		return -1
 	}
-	fmt.Printf("Err: pipe: %v direction: %v count: %v, i %v, j %v \n", string(network[i][j]), direction, count, i, j)
+	// fmt.Printf("PERFECT PIPE: pipe: %v direction: %v count: %v, i %v, j %v \n", string(network[i][j]), direction, count, i, j)
 	d := pipeDirections(network[i][j], direction)
 	newI, newJ := getIndex(d, i, j)
 	c := testPath(network, d, newI, newJ, count+1)
 	if c == -1 {
+		// fmt.Printf("Err: -1 pipe: %v direction: %v count: %v, i %v, j %v \n", string(network[i][j]), direction, count, i, j)
 		return -1
 	}
 	count = c
@@ -162,12 +163,20 @@ func testPath(network [][]rune, direction direction, i, j, count int) int {
 func part1(input *string) {
 	network, i, j := parseInput(input)
 	fmt.Printf("Network: %v, sI: %v, sj: %v\n", network, i, j)
-	newI, newJ := getIndex(south, i, j)
 	count := 0
+	newI, newJ := 0, 0
+
+	newI, newJ = getIndex(north, i, j)
+	count = max(testPath(network, north, newI, newJ, 0), count)
+
+	newI, newJ = getIndex(east, i, j)
+	count = max(testPath(network, east, newI, newJ, 0), count)
+
+	newI, newJ = getIndex(south, i, j)
 	count = max(testPath(network, south, newI, newJ, 0), count)
-	count = max(testPath(network, south, newI, newJ, 0), count)
-	count = max(testPath(network, south, newI, newJ, 0), count)
-	count = max(testPath(network, south, newI, newJ, 0), count)
+
+	newI, newJ = getIndex(west, i, j)
+	count = max(testPath(network, west, newI, newJ, 0), count)
 	fmt.Printf("Count: %d\n", count/2)
 }
 
