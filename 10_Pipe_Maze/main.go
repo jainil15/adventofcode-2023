@@ -229,9 +229,9 @@ func checkPipeNS(pipe1 rune, pipe2 rune) bool {
 		if pipe1 == 'F' {
 			return false
 		}
-		if pipe1 == '-' {
-			return false
-		}
+		// if pipe1 == '-' {
+		// 	return false
+		// }
 		return true
 	}
 	if pipe1 == 'F' && pipe2 == '7' {
@@ -273,6 +273,24 @@ func checkIfInsideLoop(pipeMap [][]rune, i, k int, sides []int) bool {
 	fmt.Println("IT IS TRUE!!!!!!!")
 	return true
 }
+func pickTheorem(area int, n int) int {
+	return ((area + 1) - (n / 2))
+}
+func calcDet(det []int) int {
+	return (det[3] * det[0]) - (det[2] * det[1])
+}
+func areaOfLoop(sides [][]int) int {
+	n := len(sides)
+	area := 0
+	for i := 0; i < n-1; i++ {
+		det := calcDet([]int{sides[i][0], sides[i+1][0], sides[i][1], sides[i+1][1]})
+		// fmt.Println(det, sides[i][0], sides[i+1][0], sides[i][1], sides[i+1][1])
+		area += det
+
+	}
+	return ModMath(area)
+
+}
 func getInsideLoopCount(pipeMap [][]rune, sideMap map[int][]int) int {
 	count := 0
 	for k := range sideMap {
@@ -297,17 +315,29 @@ func getInsideLoopCount(pipeMap [][]rune, sideMap map[int][]int) int {
 
 	return count
 }
-
+func ModMath(a int) int {
+	if a < 0 {
+		return -a
+	}
+	return a
+}
 func part2(input *string) {
 	network, i, j := parseInput(input)
-	fmt.Printf("Network: %v, sI: %v, sj: %v\n", network, i, j)
+	// fmt.Printf("Network: %v, sI: %v, sj: %v\n", network, i, j)
 	newI, newJ := 0, 0
 	newI, newJ = getIndex(south, i, j)
 	sidesMap := make(map[int][]int)
-	w := wrapper{}
+	w := wrapper{
+		sides: [][]int{{i, j}},
+	}
 	count := testPath2(network, &w, sidesMap, south, newI, newJ, 0)
 	// fmt.Println(w)
-	fmt.Println(getInsideLoopCount(network, sidesMap))
+	// fmt.Println(getInsideLoopCount(network, sidesMap))
+	fmt.Println(w.sides)
+	area := areaOfLoop(w.sides)
+
+	fmt.Printf("Area: %d\n", area)
+	fmt.Printf("Pick Theorem: %v\n", pickTheorem(area/2, len(w.sides)-1))
 	fmt.Printf("Count : %d\n", count/2)
 }
 func part1(input *string) {
