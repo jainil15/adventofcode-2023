@@ -54,7 +54,9 @@ func expandGalaxy(galaxyMap [][]rune) [][]rune {
 	for _, val := range galaxyMap {
 		if reflect.DeepEqual(val, emptyGalaxyRow) {
 			// fmt.Println(val)
-			expandedGalaxy = append(expandedGalaxy, val, val)
+			for l := 0; l < 2; l++ {
+				expandedGalaxy = append(expandedGalaxy, val)
+			}
 			continue
 		}
 		expandedGalaxy = append(expandedGalaxy, val)
@@ -71,7 +73,9 @@ func expandGalaxy(galaxyMap [][]rune) [][]rune {
 		// fmt.Println()
 		if reflect.DeepEqual(val, emptyGalaxyCol) {
 			// fmt.Println(val)
-			expandedGalaxy = append(expandedGalaxy, val, val)
+			for l := 0; l < 2; l++ {
+				expandedGalaxy = append(expandedGalaxy, val)
+			}
 			continue
 		}
 		expandedGalaxy = append(expandedGalaxy, val)
@@ -118,6 +122,68 @@ func getTotal(galaxyMap [][]rune) int {
 	}
 	return total
 }
+
+func getTotalV2(galaxyMap [][]rune, locations map[int]Position, count int) int {
+	n, m := len(galaxyMap), len(galaxyMap[0])
+	currentPos := Position{
+		0, 0,
+	}
+	// TODO : DELETE THIS LINE
+	_ = n
+	emptyGalaxyRow := make([]rune, m)
+	for i := 0; i < m; i++ {
+		emptyGalaxyRow[i] = '.'
+	}
+	//::ROW::
+
+	for _, val := range galaxyMap {
+		if reflect.DeepEqual(val, emptyGalaxyRow) {
+			for k, l := range locations {
+				if l.x > currentPos.x {
+					locations[k] = Position{
+						l.x + count - 1,
+						l.y,
+					}
+				}
+			}
+			currentPos.x += count
+			continue
+		}
+		currentPos.x++
+	}
+	galaxyMap = transpose(galaxyMap)
+	for _, val := range galaxyMap {
+		if reflect.DeepEqual(val, emptyGalaxyRow) {
+			for k, l := range locations {
+				if l.y > currentPos.y {
+					locations[k] = Position{
+						l.x,
+						l.y + count - 1,
+					}
+				}
+			}
+			currentPos.y += count
+			continue
+		}
+		currentPos.y++
+	}
+	n = len(locations)
+	total := 0
+	for k, _ := range locations {
+		for i := k + 1; i < n; i++ {
+			total += mathMod(locations[k].x-locations[i].x) + mathMod(locations[k].y-locations[i].y)
+		}
+	}
+	return total
+
+}
+func part2(content *string) {
+	galaxyMap := parseInput(content)
+	locations := getLocations(galaxyMap)
+	total := getTotalV2(galaxyMap, locations, 1000000)
+	fmt.Printf("Expanded Galaxy: %d\n", total)
+
+}
 func part1(content *string) {
 	galaxyMap := parseInput(content)
 	// fmt.Printf("Galaxy Map: %v\n", galaxyMap)
@@ -132,6 +198,6 @@ func main() {
 	start := time.Now()
 	path := os.Args[1]
 	content := readFile(path)
-	part1(&content)
+	part2(&content)
 	fmt.Printf("Took: %v\n", time.Since(start))
 }
