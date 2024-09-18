@@ -186,10 +186,9 @@ func part2(content *string) {
 }
 func part1(content *string) {
 	galaxyMap := parseInput(content)
+	locations := getLocations(galaxyMap)
 	// fmt.Printf("Galaxy Map: %v\n", galaxyMap)
-	expandedGalaxy := expandGalaxy(galaxyMap)
-	total := getTotal(expandedGalaxy)
-
+	total := getTotalV2(galaxyMap, locations, 2)
 	fmt.Printf("Expanded Galaxy: %d\n", total)
 
 }
